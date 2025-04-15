@@ -48,8 +48,7 @@ def decode(number: int):
     base = len(CHARSET)
     result = ""
     while number > 0:
-        print(CHARSET[number % base])
-        result = CHARSET[number % base] + result
+        result = CHARSET[number % base - 1] + result
         number = number // base
     return filter_message(result)
 
