@@ -49,7 +49,6 @@ async def connect_to_turbowarp():
             message = json.loads(message)
             if "name" in message and message["name"] == variable:
                 data = message["value"]
-                print(message)
                 print(f"Data set to: {data}")
                 await on_set(data, set_value)
             await asyncio.sleep(1)
@@ -87,8 +86,8 @@ def decode(number: int):
 
 
 async def on_set(value, set_value):
-    # if value == "":
-    # return
+    if value == "":
+        return
     number = str(int(value))
     start_mode = None
     if number[0] == "1":
