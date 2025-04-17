@@ -4,7 +4,8 @@
 
 I don't know why I did this but it works lol
 
-https://github.com/user-attachments/assets/bc47994d-8504-4c0f-af11-243a572d0f8c
+
+https://github.com/user-attachments/assets/176ff360-f3b1-49bf-86f4-996e37bfbf29
 
 Supported charset: ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz 0123456789!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"""
 
