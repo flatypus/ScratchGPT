@@ -1,25 +1,57 @@
-from typing import Dict, List
-import dotenv
 from flowchat import Chain, autodedent
+from typing import Dict, List
+from websockets.asyncio.client import connect
+import asyncio
+import dotenv
+import json
 import os
-import scratchattach as sa
-import warnings
 import pydantic
 
-warnings.filterwarnings('ignore', category=sa.LoginDataWarning)
 dotenv.load_dotenv()
 
 CHARSET = """ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz 0123456789!"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"""
 SESSION_ID_LENGTH = 4
 USERNAME = os.getenv("USERNAME")
-PASSWORD = os.getenv("PASSWORD")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 project_id = "1162008274"
 
-session = sa.login(USERNAME, PASSWORD)
-cloud = session.connect_tw_cloud(project_id)
-events = cloud.events()
+url = "wss://clouddata.turbowarp.org"
+
+variable = "☁ DATA"
+data = None
+
+
+async def connect_to_turbowarp():
+    global data
+    headers = {
+        "User-Agent": "scratchgpt/1.0.0 https://github.com/flatypus/scratchgpt"
+    }
+
+    async def set_value(value):
+        await websocket.send(json.dumps({
+            "method": "set",
+            "user": USERNAME,
+            "project_id": project_id,
+            "name": variable,
+            "value": value
+        }))
+
+    async with connect(url, additional_headers=headers) as websocket:
+        await websocket.send(json.dumps({
+            "method": "handshake",
+            "project_id": project_id,
+            "user": USERNAME
+        }))
+        await set_value("")
+        while True:
+            message = await websocket.recv()
+            message = json.loads(message)
+            if "name" in message and message["name"] == variable:
+                data = message["value"]
+                print(f"Data set to: {data}")
+                await on_set(data, set_value)
+            await asyncio.sleep(1)
 
 
 class Message(pydantic.BaseModel):
@@ -48,15 +80,13 @@ def decode(number: int):
     base = len(CHARSET)
     result = ""
     while number > 0:
-        result = CHARSET[number % base - 1] + result
+        result = CHARSET[number % base] + result
         number = number // base
     return filter_message(result)
 
 
-@events.event
-def on_set(activity):  # Called when a cloud var is set
-    print(f"Variable {activity.var} was set to the value {activity.value}")
-    number = str(int(activity.value))
+async def on_set(value, set_value):
+    number = str(int(value))
     start_mode = None
     if number[0] == "1":
         start_mode = "START"
@@ -73,7 +103,7 @@ def on_set(activity):  # Called when a cloud var is set
 
     print(f"Mode: {start_mode}, Session ID: {session_id}, Message: {message}")
 
-    if start_mode == "START":
+    if start_mode == "START" or session_id not in cache:
         cache[session_id] = []
     else:
         cache[session_id].append(Message(role="user", content=message))
@@ -87,17 +117,17 @@ def on_set(activity):  # Called when a cloud var is set
         .link("Hi! Can you tell me a bit about yourself?")
     )
     for message in cache[session_id]:
-        chain = chain.link(message.role, message.content)
+        chain = chain.link(
+            message.content,
+            assistant=message.role == "assistant"
+        )
     response = chain.pull().last()
     print(f"Chatbot wants to respond with: {response}")
     cache[session_id].append(Message(role="assistant", content=response))
     # response to user from chatbot is encoded as mode 3
-    cloud.set_var("DATA", f"{3}{encode(f'{session_id}{response}')}")
+    response_encoded = f"{3}{encode(f'{session_id}{response}')}"
+    print(f"Response encoded: {response_encoded}")
+    await set_value(response_encoded)
 
 
-@events.event  # Called when the event listener is ready
-def on_ready():
-    print("Event listener ready!")
-
-
-events.start()
+asyncio.run(connect_to_turbowarp())
