@@ -7,6 +7,8 @@ I don't know why I did this but it works lol
 
 https://github.com/user-attachments/assets/176ff360-f3b1-49bf-86f4-996e37bfbf29
 
+(Clearly there's still something wrong with gpt-4o-mini because the 69th element is Thulium; Terbium is the 65th. But I digress)
+
 Supported charset: ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz 0123456789!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"""
 
 (if it doesn't work for you, I either turned the server off cuz tokens, or someone else is interacting with it. If the latter, try reloading. If that doesn't work, then yeah I prob turned it off)
